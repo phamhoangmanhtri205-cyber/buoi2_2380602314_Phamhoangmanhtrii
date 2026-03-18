@@ -25,7 +25,12 @@ class ProductController
      */
     public function list()
     {
+        // Lấy danh sách sản phẩm
         $products = $this->productModel->getProducts();
+        
+        // [SỬA Ở ĐÂY]: Lấy thêm danh sách danh mục để hiển thị ở Sidebar (bên trái)
+        $categories = (new CategoryModel($this->db))->getCategories();
+        
         include 'app/views/product/list.php';
     }
 
@@ -62,8 +67,7 @@ class ProductController
                 $categories = (new CategoryModel($this->db))->getCategories();
                 include 'app/views/product/add.php';
             } else {
-                // Sử dụng thông báo flash session nếu có thể, ở đây redirect trực tiếp
-                header('Location: /tri/webbanhang/Product/list');
+                header('Location: index.php?url=Product/list');
                 exit();
             }
         }
@@ -78,7 +82,7 @@ class ProductController
         if ($product) {
             include 'app/views/product/show.php';
         } else {
-            header('Location: /tri/webbanhang/Product/list');
+            header('Location: index.php?url=Product/list');
             exit();
         }
     }
@@ -93,7 +97,7 @@ class ProductController
         if ($product) {
             include 'app/views/product/edit.php';
         } else {
-            header('Location: /tri/webbanhang/Product/list');
+            header('Location: index.php?url=Product/list');
             exit();
         }
     }
@@ -117,13 +121,12 @@ class ProductController
             if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
                 $newImage = $this->uploadImage($_FILES['image']);
                 if ($newImage) {
-                    // Nếu cần, có thể thêm code xóa file ảnh cũ ở đây để tiết kiệm bộ nhớ
                     $image = $newImage;
                 }
             }
 
             if ($this->productModel->updateProduct($id, $name, $description, $price, $category_id, $image)) {
-                header('Location: /tri/webbanhang/Product/list');
+                header('Location: index.php?url=Product/list');
                 exit();
             } else {
                 die("Lỗi: Không thể cập nhật sản phẩm.");
@@ -137,7 +140,7 @@ class ProductController
     public function delete($id)
     {
         if ($this->productModel->deleteProduct($id)) {
-            header('Location: /tri/webbanhang/Product/list');
+            header('Location: index.php?url=Product/list');
             exit();
         } else {
             die("Lỗi: Không thể xóa sản phẩm này.");
@@ -154,12 +157,10 @@ class ProductController
             mkdir($target_dir, 0777, true);
         }
         
-        // Tạo tên file duy nhất để tránh ghi đè
         $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
         $file_name = time() . "_" . uniqid() . "." . $ext;
         $target_file = $target_dir . $file_name;
 
-        // Chỉ cho phép một số định dạng ảnh nhất định
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
         if (in_array($ext, $allowed)) {
             if (move_uploaded_file($file["tmp_name"], $target_file)) {

@@ -1,13 +1,101 @@
 <?php include 'app/views/shares/header.php'; ?>
 
-<div class="container py-5">
-<div class="row justify-content-center">
-<div class="col-md-8">
-<div class="card shadow-sm border-0 rounded-3">
-<div class="card-header bg-warning text-dark py-3">
-<h5 class="card-title mb-0"><i class="fas fa-edit me-2"></i>Chỉnh sửa sản phẩm</h5>
-</div>
-<div class="card-body p-4">
+<!-- Import Font -->
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --neymar-yellow: #ffcc00;
+    --neymar-dark: #111;
+}
+body { 
+    font-family: 'Roboto', sans-serif; 
+    background-color: #f4f5f7; 
+    background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    background: #fff;
+}
+.card-header {
+    background: var(--neymar-dark) !important;
+    color: white !important;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 25px 20px;
+    border-bottom: 4px solid var(--neymar-yellow) !important;
+}
+.card-body { padding: 40px !important; }
+.form-label {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 8px;
+}
+.form-control, .form-select { 
+    border-radius: 6px; 
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    background-color: #fafafa;
+    transition: all 0.3s;
+    font-size: 15px;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--neymar-yellow);
+    box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.2);
+    background-color: #fff;
+}
+.btn-warning {
+    background: var(--neymar-yellow) !important;
+    color: #000 !important;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    border-radius: 6px;
+    border: none;
+    padding: 12px 30px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+.btn-warning:hover { 
+    background: #000 !important; 
+    color: var(--neymar-yellow) !important; 
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+}
+.btn-outline-secondary {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 25px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+.btn-outline-secondary:hover {
+    background: #e2e3e5;
+    color: #000;
+    transform: translateY(-2px);
+}
+</style>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3 class="m-0">CHỈNH SỬA SẢN PHẨM</h3>
+                </div>
+                <div class="card-body">
+
 <?php if (!empty($errors)): ?>
 <div class="alert alert-danger border-0">
 <ul class="mb-0">
@@ -18,54 +106,49 @@
 </div>
 <?php endif; ?>
 
-                <form method="POST" action="/tri/webbanhang/Product/update" enctype="multipart/form-data">
+                <?php 
+                // Xử lý tự động đường dẫn submit
+                $basePath = dirname($_SERVER['SCRIPT_NAME']);
+                $basePath = ($basePath === '/' || $basePath === '\\') ? '' : $basePath;
+                ?>
+                <form method="POST" action="<?= $basePath ?>/index.php?url=Product/update" enctype="multipart/form-data">
                     <input type="hidden" name="id" value="<?php echo $product->id; ?>">
                     <input type="hidden" name="existing_image" value="<?php echo $product->image; ?>">
 
                     <div class="mb-3">
                         <label for="name" class="form-label fw-bold">Tên sản phẩm</label>
-                        <input type="text" id="name" name="name" class="form-control" 
-                               value="<?php echo htmlspecialchars($product->name, ENT_QUOTES, 'UTF-8'); ?>" required>
+                        <input type="text" class="form-control" id="name" name="name" value="<?= htmlspecialchars($product->name) ?>" required>
                     </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="price" class="form-label fw-bold">Giá bán (VND)</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" id="price" name="price" class="form-control" step="0.01" 
-                                       value="<?php echo htmlspecialchars($product->price, ENT_QUOTES, 'UTF-8'); ?>" required>
-                            </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-bold">Mô tả chi tiết</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required><?= htmlspecialchars($product->description) ?></textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="price" class="form-label fw-bold">Giá sản phẩm (VNĐ)</label>
+                            <input type="number" class="form-control" id="price" name="price" value="<?= $product->price ?>" required>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6">
                             <label for="category_id" class="form-label fw-bold">Danh mục</label>
-                            <select id="category_id" name="category_id" class="form-select" required>
+                            <select class="form-select" id="category_id" name="category_id" required>
                                 <?php foreach ($categories as $category): ?>
-                                    <option value="<?php echo $category->id; ?>" 
-                                        <?php echo $category->id == $product->category_id ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8'); ?>
-                                    </option>
+                                    <option value="<?= $category->id ?>" <?= ($category->id == $product->category_id) ? 'selected' : '' ?>><?= htmlspecialchars($category->name) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="description" class="form-label fw-bold">Mô tả sản phẩm</label>
-                        <textarea id="description" name="description" class="form-control" rows="4" required><?php echo htmlspecialchars($product->description, ENT_QUOTES, 'UTF-8'); ?></textarea>
-                    </div>
-
                     <div class="mb-4">
-                        <label for="image" class="form-label fw-bold">Thay đổi hình ảnh</label>
-                        <input type="file" id="image" name="image" class="form-control" accept="image/*" onchange="previewImage(event)">
+                        <label for="image" class="form-label fw-bold">Cập nhật hình ảnh (Tùy chọn)</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" onchange="previewImage(event)">
                         
                         <div class="row mt-3">
-                            <?php if ($product->image): ?>
                             <div class="col-6">
                                 <p class="small text-muted mb-1">Ảnh hiện tại:</p>
-                                <img src="/tri/webbanhang/<?php echo $product->image; ?>" class="img-thumbnail shadow-sm" style="max-height: 150px;">
+                                <img src="<?= $basePath ?>/<?= $product->image ?>" class="img-thumbnail border shadow-sm" style="max-height: 150px;" onerror="this.src='https://placehold.co/500x500?text=No+Image'">
                             </div>
-                            <?php endif; ?>
                             <div class="col-6 d-none" id="preview-box">
                                 <p class="small text-success mb-1">Ảnh mới:</p>
                                 <img id="image-preview" src="#" class="img-thumbnail border-success shadow-sm" style="max-height: 150px;">
@@ -74,7 +157,7 @@
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                        <a href="/tri/webbanhang/Product/list" class="btn btn-outline-secondary">
+                        <a href="<?= $basePath ?>/index.php?url=Product/list" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-1"></i> Hủy bỏ
                         </a>
                         <button type="submit" class="btn btn-warning px-4 text-dark fw-bold">
@@ -86,26 +169,20 @@
         </div>
     </div>
 </div>
-
-
 </div>
 
 <script>
 function previewImage(event) {
-const reader = new FileReader();
-const output = document.getElementById('image-preview');
-const box = document.getElementById('preview-box');
-
-    reader.onload = function() {
+    var reader = new FileReader();
+    reader.onload = function(){
+        var output = document.getElementById('image-preview');
         output.src = reader.result;
-        box.classList.remove(&#39;d-none&#39;);
-    }
-    if(event.target.files[0]) {
+        document.getElementById('preview-box').classList.remove('d-none');
+    };
+    if(event.target.files[0]){
         reader.readAsDataURL(event.target.files[0]);
     }
 }
-
-
 </script>
 
 <?php include 'app/views/shares/footer.php'; ?>

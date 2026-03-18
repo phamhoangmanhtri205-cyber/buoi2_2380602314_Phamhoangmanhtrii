@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 // Tự động load Database để các Controller không cần require lại thủ công quá nhiều
 require_once 'app/config/database.php';
 

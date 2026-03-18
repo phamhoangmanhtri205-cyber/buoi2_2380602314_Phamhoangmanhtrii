@@ -18,6 +18,8 @@ class CategoryController
     public function list()
     {
         $categories = $this->categoryModel->getCategories();
+        require_once('app/models/ProductModel.php');
+        $products = (new ProductModel($this->db))->getProducts();
         include 'app/views/category/list.php';
     }
 
@@ -35,8 +37,8 @@ class CategoryController
             $description = $_POST['description'] ?? '';
 
             if ($this->categoryModel->addCategory($name, $description)) {
-                // Điều hướng về danh sách sản phẩm hoặc danh mục tùy hệ thống
-                header('Location: /webbanhang/Product/list'); 
+                // [SỬA Ở ĐÂY]: Thêm /tri/ vào đường dẫn để khớp với thư mục local của cậu
+                header('Location: index.php?url=Product/list'); 
                 exit;
             } else {
                 echo "Có lỗi xảy ra khi thêm danh mục.";
@@ -47,7 +49,6 @@ class CategoryController
     // Hiển thị form chỉnh sửa danh mục
     public function edit($id)
     {
-        // Lấy dữ liệu danh mục từ Model
         $category = $this->categoryModel->getCategoryById($id);
         
         if ($category) {
@@ -65,7 +66,8 @@ class CategoryController
             $description = $_POST['description'] ?? '';
 
             if ($this->categoryModel->updateCategory($id, $name, $description)) {
-                header('Location: /webbanhang/Product/list');
+                // [SỬA Ở ĐÂY]
+                header('Location: index.php?url=Product/list');
                 exit;
             } else {
                 echo "Có lỗi xảy ra khi cập nhật.";
@@ -77,10 +79,14 @@ class CategoryController
     public function delete($id)
     {
         if ($this->categoryModel->deleteCategory($id)) {
-            header('Location: /webbanhang/Product/list');
+            // [SỬA Ở ĐÂY]
+            header('Location: index.php?url=Product/list');
             exit;
         } else {
-            echo "Lỗi khi xóa: Danh mục có thể đang chứa sản phẩm hoặc không tồn tại.";
+            echo "<script>
+                    alert('Lỗi: Không thể xóa! Danh mục này đang chứa sản phẩm.');
+                    window.location.href='index.php?url=Product/list';
+                  </script>";
         }
     }
 }
