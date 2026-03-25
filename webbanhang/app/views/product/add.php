@@ -110,7 +110,7 @@ body {
                 $basePath = dirname($_SERVER['SCRIPT_NAME']);
                 $basePath = ($basePath === '/' || $basePath === '\\') ? '' : $basePath;
                 ?>
-                <form method="POST" action="<?= $basePath ?>/index.php?url=Product/save" enctype="multipart/form-data">
+                <form method="POST" action="<?= $basePath ?>/index.php?url=Product/save">
                     <div class="mb-3">
                         <label for="name" class="form-label fw-bold">Tên sản phẩm</label>
                         <input type="text" class="form-control" id="name" name="name" placeholder="Ví dụ: Giày đá bóng Nike..." required>
@@ -138,11 +138,11 @@ body {
                     </div>
 
                     <div class="mb-4">
-                        <label for="image" class="form-label fw-bold">Hình ảnh sản phẩm</label>
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*" onchange="previewImage(event)">
+                        <label for="image" class="form-label fw-bold">Đường dẫn hình ảnh (URL)</label>
+                        <input type="text" class="form-control" id="image" name="image" placeholder="Nhập link ảnh (VD: https://...)" oninput="previewImage(event)">
                         <div id="image-preview-container" class="mt-3 d-none">
                             <p class="small mb-1">Xem trước ảnh:</p>
-                            <img id="image-preview" src="#" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
+                            <img id="image-preview" src="#" alt="Preview" class="img-thumbnail" style="max-height: 200px;" onerror="this.onerror=null; this.src='https://placehold.co/500x500?text=Lỗi+Hình+Ảnh';">
                         </div>
                     </div>
 
@@ -163,14 +163,13 @@ body {
 
 <script>
 function previewImage(event) {
-    var reader = new FileReader();
-    reader.onload = function(){
-        var output = document.getElementById('image-preview');
-        output.src = reader.result;
+    var output = document.getElementById('image-preview');
+    var url = event.target.value;
+    if (url.trim() !== "") {
+        output.src = url;
         document.getElementById('image-preview-container').classList.remove('d-none');
-    };
-    if(event.target.files[0]){
-        reader.readAsDataURL(event.target.files[0]);
+    } else {
+        document.getElementById('image-preview-container').classList.add('d-none');
     }
 }
 </script>

@@ -23,15 +23,40 @@ class CategoryController
         include 'app/views/category/list.php';
     }
 
+    // Hiển thị sản phẩm theo danh mục
+    public function show($id)
+    {
+        $category = $this->categoryModel->getCategoryById($id);
+        if (!$category) {
+            die("Danh mục không tồn tại.");
+        }
+
+        $categories = $this->categoryModel->getCategories();
+
+        require_once('app/models/ProductModel.php');
+        $productModel = new ProductModel($this->db);
+        $products = $productModel->getProductsByCategoryId($id);
+
+        include 'app/views/category/list.php';
+    }
+
     // Hiển thị form thêm danh mục
     public function add()
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         include 'app/views/category/add.php';
     }
 
     // Xử lý lưu danh mục mới
     public function save()
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $name = $_POST['name'] ?? '';
             $description = $_POST['description'] ?? '';
@@ -49,6 +74,10 @@ class CategoryController
     // Hiển thị form chỉnh sửa danh mục
     public function edit($id)
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         $category = $this->categoryModel->getCategoryById($id);
         
         if ($category) {
@@ -61,6 +90,10 @@ class CategoryController
     // Xử lý cập nhật danh mục
     public function update($id)
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $name = $_POST['name'] ?? '';
             $description = $_POST['description'] ?? '';
@@ -78,6 +111,10 @@ class CategoryController
     // Xử lý xóa danh mục
     public function delete($id)
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         if ($this->categoryModel->deleteCategory($id)) {
             // [SỬA Ở ĐÂY]
             header('Location: index.php?url=Product/list');

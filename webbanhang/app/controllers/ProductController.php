@@ -39,6 +39,10 @@ class ProductController
      */
     public function add()
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         $categories = (new CategoryModel($this->db))->getCategories();
         include 'app/views/product/add.php';
     }
@@ -48,17 +52,18 @@ class ProductController
      */
     public function save()
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $name = $_POST['name'] ?? '';
             $description = $_POST['description'] ?? '';
             $price = $_POST['price'] ?? 0;
             $category_id = $_POST['category_id'] ?? null;
             
-            // Xử lý upload ảnh chuyên nghiệp
-            $image = "";
-            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-                $image = $this->uploadImage($_FILES['image']);
-            }
+            // Sửa đổi: Sử dụng trực tiếp đường dẫn URL do người dùng nhập vào thay vì upload
+            $image = trim($_POST['image'] ?? '');
 
             $result = $this->productModel->addProduct($name, $description, $price, $category_id, $image);
 
@@ -92,6 +97,10 @@ class ProductController
      */
     public function edit($id)
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         $product = $this->productModel->getProductById($id);
         $categories = (new CategoryModel($this->db))->getCategories();
         if ($product) {
@@ -107,6 +116,10 @@ class ProductController
      */
     public function update()
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'];
             $name = $_POST['name'];
@@ -114,16 +127,8 @@ class ProductController
             $price = $_POST['price'];
             $category_id = $_POST['category_id'];
             
-            // Giữ lại ảnh cũ nếu không có ảnh mới
-            $product = $this->productModel->getProductById($id);
-            $image = $_POST['existing_image'] ?? $product->image;
-
-            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-                $newImage = $this->uploadImage($_FILES['image']);
-                if ($newImage) {
-                    $image = $newImage;
-                }
-            }
+            // Sửa đổi: Lấy trực tiếp URL ảnh mới từ POST form thay vì upload file
+            $image = trim($_POST['image'] ?? '');
 
             if ($this->productModel->updateProduct($id, $name, $description, $price, $category_id, $image)) {
                 header('Location: index.php?url=Product/list');
@@ -139,6 +144,10 @@ class ProductController
      */
     public function delete($id)
     {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=Product/index');
+            exit;
+        }
         if ($this->productModel->deleteProduct($id)) {
             header('Location: index.php?url=Product/list');
             exit();
@@ -147,26 +156,5 @@ class ProductController
         }
     }
 
-    /**
-     * Helper: Upload hình ảnh
-     */
-    private function uploadImage($file)
-    {
-        $target_dir = "uploads/";
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-        
-        $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
-        $file_name = time() . "_" . uniqid() . "." . $ext;
-        $target_file = $target_dir . $file_name;
 
-        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-        if (in_array($ext, $allowed)) {
-            if (move_uploaded_file($file["tmp_name"], $target_file)) {
-                return $target_file;
-            }
-        }
-        return null;
-    }
 }

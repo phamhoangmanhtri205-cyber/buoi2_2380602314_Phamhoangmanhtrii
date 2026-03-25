@@ -111,9 +111,8 @@ body {
                 $basePath = dirname($_SERVER['SCRIPT_NAME']);
                 $basePath = ($basePath === '/' || $basePath === '\\') ? '' : $basePath;
                 ?>
-                <form method="POST" action="<?= $basePath ?>/index.php?url=Product/update" enctype="multipart/form-data">
+                <form method="POST" action="<?= $basePath ?>/index.php?url=Product/update">
                     <input type="hidden" name="id" value="<?php echo $product->id; ?>">
-                    <input type="hidden" name="existing_image" value="<?php echo $product->image; ?>">
 
                     <div class="mb-3">
                         <label for="name" class="form-label fw-bold">Tên sản phẩm</label>
@@ -141,17 +140,13 @@ body {
                     </div>
 
                     <div class="mb-4">
-                        <label for="image" class="form-label fw-bold">Cập nhật hình ảnh (Tùy chọn)</label>
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*" onchange="previewImage(event)">
+                        <label for="image" class="form-label fw-bold">Đường dẫn hình ảnh (URL)</label>
+                        <input type="text" class="form-control" id="image" name="image" value="<?= htmlspecialchars($product->image) ?>" placeholder="Nhập link ảnh (VD: https://...)" oninput="previewImage(event)">
                         
                         <div class="row mt-3">
-                            <div class="col-6">
-                                <p class="small text-muted mb-1">Ảnh hiện tại:</p>
-                                <img src="<?= $basePath ?>/<?= $product->image ?>" class="img-thumbnail border shadow-sm" style="max-height: 150px;" onerror="this.src='https://placehold.co/500x500?text=No+Image'">
-                            </div>
-                            <div class="col-6 d-none" id="preview-box">
-                                <p class="small text-success mb-1">Ảnh mới:</p>
-                                <img id="image-preview" src="#" class="img-thumbnail border-success shadow-sm" style="max-height: 150px;">
+                            <div class="col-12" id="preview-box">
+                                <p class="small text-success mb-1">Ảnh hiện tại:</p>
+                                <img id="image-preview" src="<?= (!empty($product->image) && strpos($product->image, 'http') === 0) ? htmlspecialchars($product->image) : $basePath . '/' . (!empty($product->image) ? htmlspecialchars($product->image) : 'assets/no-image.jpg') ?>" class="img-thumbnail border-success shadow-sm" style="max-height: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/500x500?text=Lỗi+Hình+Ảnh';">
                             </div>
                         </div>
                     </div>
@@ -173,14 +168,12 @@ body {
 
 <script>
 function previewImage(event) {
-    var reader = new FileReader();
-    reader.onload = function(){
-        var output = document.getElementById('image-preview');
-        output.src = reader.result;
-        document.getElementById('preview-box').classList.remove('d-none');
-    };
-    if(event.target.files[0]){
-        reader.readAsDataURL(event.target.files[0]);
+    var output = document.getElementById('image-preview');
+    var url = event.target.value;
+    if (url.trim() !== "") {
+        output.src = url;
+    } else {
+        output.src = 'https://placehold.co/500x500?text=No+Image';
     }
 }
 </script>
