@@ -3,17 +3,16 @@ class ProductModel
 {
     private $conn;
     private $table_name = "product";
-
+    
     public function __construct($db)
     {
         $this->conn = $db;
     }
-
-    // Lấy danh sách sản phẩm bao gồm cột image
+    
     public function getProducts()
     {
-        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name 
-                  FROM " . $this->table_name . " p 
+        $query = "SELECT p.id, p.name, p.description, p.price, c.name as category_name
+                  FROM " . $this->table_name . " p
                   LEFT JOIN category c ON p.category_id = c.id";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -31,8 +30,7 @@ class ProductModel
         return $result;
     }
 
-    // Thêm sản phẩm mới với thuộc tính image
-    public function addProduct($name, $description, $price, $category_id, $image)
+    public function addProduct($name, $description, $price, $category_id)
     {
         $errors = [];
         if (empty($name)) {
@@ -48,67 +46,45 @@ class ProductModel
             return $errors;
         }
 
-        $query = "INSERT INTO " . $this->table_name . " (name, description, price, category_id, image) 
-                  VALUES (:name, :description, :price, :category_id, :image)";
+        $query = "INSERT INTO " . $this->table_name . " (name, description, price, category_id) VALUES (:name, :description, :price, :category_id)";
         $stmt = $this->conn->prepare($query);
-
-        // Làm sạch dữ liệu
+        
         $name = htmlspecialchars(strip_tags($name));
         $description = htmlspecialchars(strip_tags($description));
         $price = htmlspecialchars(strip_tags($price));
         $category_id = htmlspecialchars(strip_tags($category_id));
-        $image = htmlspecialchars(strip_tags($image));
-
+        
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':description', $description);
         $stmt->bindParam(':price', $price);
         $stmt->bindParam(':category_id', $category_id);
-        $stmt->bindParam(':image', $image);
-
+        
         if ($stmt->execute()) {
             return true;
         }
         return false;
     }
 
-    // Cập nhật sản phẩm bao gồm thay đổi hình ảnh
-    public function updateProduct($id, $name, $description, $price, $category_id, $image)
+    public function updateProduct($id, $name, $description, $price, $category_id)
     {
-        $query = "UPDATE " . $this->table_name . " 
-                  SET name=:name, description=:description, price=:price, category_id=:category_id, image=:image 
-                  WHERE id=:id";
+        $query = "UPDATE " . $this->table_name . " SET name=:name, description=:description, price=:price, category_id=:category_id WHERE id=:id";
         $stmt = $this->conn->prepare($query);
-
+        
         $name = htmlspecialchars(strip_tags($name));
         $description = htmlspecialchars(strip_tags($description));
         $price = htmlspecialchars(strip_tags($price));
         $category_id = htmlspecialchars(strip_tags($category_id));
-        $image = htmlspecialchars(strip_tags($image));
-
+        
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':description', $description);
         $stmt->bindParam(':price', $price);
         $stmt->bindParam(':category_id', $category_id);
-        $stmt->bindParam(':image', $image);
-
+        
         if ($stmt->execute()) {
             return true;
         }
         return false;
-    }
-
-    // Lấy sản phẩm theo danh mục
-    public function getProductsByCategoryId($categoryId)
-    {
-        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name 
-                  FROM " . $this->table_name . " p 
-                  LEFT JOIN category c ON p.category_id = c.id 
-                  WHERE p.category_id = :category_id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':category_id', $categoryId);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
     public function deleteProduct($id)
@@ -116,7 +92,6 @@ class ProductModel
         $query = "DELETE FROM " . $this->table_name . " WHERE id=:id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
-        
         if ($stmt->execute()) {
             return true;
         }

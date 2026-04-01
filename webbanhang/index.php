@@ -1,30 +1,103 @@
 <?php
 session_start();
+require_once 'app/Models/ProductModel.php';
 
-// Tự động load Database để các Controller không cần require lại thủ công quá nhiều
+// Option helpers
+if(file_exists('app/helpers/SessionHelper.php')) {
+    require_once 'app/helpers/SessionHelper.php';
+}
+
 require_once 'app/config/database.php';
 
-$url = $_GET['url'] ?? 'Product/index';
+$url = $_GET['url'] ?? '';
 $url = rtrim($url, '/');
 $url = filter_var($url, FILTER_SANITIZE_URL);
 $url = explode('/', $url);
 
-$controllerName = (!empty($url[0])) ? ucfirst($url[0]) . 'Controller' : 'ProductController';
-$action = $url[1] ?? 'index';
+// Kiểm tra phần đầu tiên của URL để xác định controller
+$controllerName = isset($url[0]) && $url[0] != '' ? ucfirst($url[0]) . 'Controller' : 'DefaultController';
 
-$controllerPath = 'app/controllers/' . $controllerName . '.php';
+// Kiểm tra phần thứ hai của URL để xác định action
+$action = isset($url[1]) && $url[1] != '' ? $url[1] : 'index';
 
-if (!file_exists($controllerPath)) {
-    die("Lỗi: Không tìm thấy Controller tại $controllerPath");
+
+// Định tuyến các yêu cầu API
+if ($controllerName === 'ApiController' && isset($url[1])) {
+    $apiControllerName = ucfirst($url[1]) . 'ApiController';
+    $apiControllerFile = 'app/controllers/' . $apiControllerName . '.php';
+
+    // Đóng session nội tại (chỉ read) để tránh khoá file session trên hệ điều hành Windows gây treo AJAX (Deadlock)!
+    session_write_close();
+
+    if (file_exists($apiControllerFile)) {
+        require_once $apiControllerFile;
+        $controller = new $apiControllerName();
+        
+        $method = $_SERVER['REQUEST_METHOD'];
+        $id = $url[2] ?? null;
+        
+        switch ($method) {
+            case 'GET':
+                if ($id) {
+                    $action = 'show';
+                } else {
+                    $action = 'index';
+                }
+                break;
+            case 'POST':
+                $action = 'store';
+                break;
+            case 'PUT':
+                if ($id) {
+                    $action = 'update';
+                }
+                break;
+            case 'DELETE':
+                if ($id) {
+                    $action = 'destroy';
+                }
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(['message' => 'Method Not Allowed']);
+                exit;
+        }
+        
+        if (method_exists($controller, $action)) {
+            if ($id) {
+                call_user_func_array([$controller, $action], [$id]);
+            } else {
+                call_user_func_array([$controller, $action], []);
+            }
+        } else {
+            http_response_code(404);
+            echo json_encode(['message' => 'Action not found']);
+        }
+        exit;
+    } else {
+        http_response_code(404);
+        echo json_encode(['message' => 'Controller not found']);
+        exit;
+    }
 }
 
-require_once $controllerPath;
-$controller = new $controllerName();
-
-if (!method_exists($controller, $action)) {
-    die("Lỗi: Không tìm thấy hàm $action trong $controllerName");
+// Nếu URL trỏ mặc định chưa nhập mà controller biến thành DefaultController thì ta sửa lại trỏ về ProductController hoặc Home
+if ($controllerName == 'DefaultController') {
+    $controllerName = 'ProductController'; // Default route
 }
 
-// Tham số truyền vào hàm (ví dụ ID sản phẩm)
-$params = array_slice($url, 2);
-call_user_func_array([$controller, $action], $params);
+// Tạo đối tượng controller tương ứng cho các yêu cầu không phải API
+if (file_exists('app/controllers/' . $controllerName . '.php')) {
+    require_once 'app/controllers/' . $controllerName . '.php';
+    $controller = new $controllerName();
+} else {
+    die('Controller not found');
+}
+
+// Kiểm tra và gọi action
+if (method_exists($controller, $action)) {
+    call_user_func_array([$controller, $action], array_slice($url, 2));
+} else {
+    die('Action not found');
+}
+?>

@@ -53,7 +53,7 @@ body {
     box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.2);
     background-color: #fff;
 }
-.btn-primary {
+.btn-warning {
     background: var(--neymar-yellow) !important;
     color: #000 !important;
     font-family: 'Oswald', sans-serif;
@@ -65,13 +65,13 @@ body {
     letter-spacing: 1px;
     transition: all 0.3s ease;
 }
-.btn-primary:hover { 
+.btn-warning:hover { 
     background: #000 !important; 
     color: var(--neymar-yellow) !important; 
     transform: translateY(-2px);
     box-shadow: 0 8px 15px rgba(0,0,0,0.2);
 }
-.btn-light {
+.btn-outline-secondary {
     font-family: 'Oswald', sans-serif;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -80,8 +80,9 @@ body {
     transition: all 0.3s;
     font-size: 14px;
 }
-.btn-light:hover {
+.btn-outline-secondary:hover {
     background: #e2e3e5;
+    color: #000;
     transform: translateY(-2px);
 }
 </style>
@@ -91,15 +92,15 @@ body {
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header text-center">
-                    <h3 class="m-0">THÊM SẢN PHẨM MỚI</h3>
+                    <h3 class="m-0">CHỈNH SỬA SẢN PHẨM</h3>
                 </div>
                 <div class="card-body">
 
 <?php if (!empty($errors)): ?>
-<div class="alert alert-danger border-0 shadow-sm">
+<div class="alert alert-danger border-0">
 <ul class="mb-0">
 <?php foreach ($errors as $error): ?>
-<li><i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
+<li><i class="fas fa-exclamation-circle me-2"></i><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
 <?php endforeach; ?>
 </ul>
 </div>
@@ -110,28 +111,29 @@ body {
                 $basePath = dirname($_SERVER['SCRIPT_NAME']);
                 $basePath = ($basePath === '/' || $basePath === '\\') ? '' : $basePath;
                 ?>
-                <form method="POST" action="<?= $basePath ?>/index.php?url=Product/save">
+                <form method="POST" action="<?= $basePath ?>/index.php?url=Product/update">
+                    <input type="hidden" name="id" value="<?php echo $product->id; ?>">
+
                     <div class="mb-3">
                         <label for="name" class="form-label fw-bold">Tên sản phẩm</label>
-                        <input type="text" class="form-control" id="name" name="name" placeholder="Ví dụ: Giày đá bóng Nike..." required>
+                        <input type="text" class="form-control" id="name" name="name" value="<?= htmlspecialchars($product->name) ?>" required>
                     </div>
-
+                    
                     <div class="mb-3">
                         <label for="description" class="form-label fw-bold">Mô tả chi tiết</label>
-                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Nhập mô tả sản phẩm..." required></textarea>
+                        <textarea class="form-control" id="description" name="description" rows="4" required><?= htmlspecialchars($product->description) ?></textarea>
                     </div>
-
+                    
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="price" class="form-label fw-bold">Giá sản phẩm (VNĐ)</label>
-                            <input type="number" class="form-control" id="price" name="price" placeholder="Ví dụ: 2500000" required>
+                            <input type="number" class="form-control" id="price" name="price" value="<?= $product->price ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label for="category_id" class="form-label fw-bold">Danh mục</label>
                             <select class="form-select" id="category_id" name="category_id" required>
-                                <option value="" disabled selected>-- Chọn danh mục --</option>
                                 <?php foreach ($categories as $category): ?>
-                                    <option value="<?= $category->id ?>"><?= htmlspecialchars($category->name) ?></option>
+                                    <option value="<?= $category->id ?>" <?= ($category->id == $product->category_id) ? 'selected' : '' ?>><?= htmlspecialchars($category->name) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -139,19 +141,22 @@ body {
 
                     <div class="mb-4">
                         <label for="image" class="form-label fw-bold">Đường dẫn hình ảnh (URL)</label>
-                        <input type="text" class="form-control" id="image" name="image" placeholder="Nhập link ảnh (VD: https://...)" oninput="previewImage(event)">
-                        <div id="image-preview-container" class="mt-3 d-none">
-                            <p class="small mb-1">Xem trước ảnh:</p>
-                            <img id="image-preview" src="#" alt="Preview" class="img-thumbnail" style="max-height: 200px;" onerror="this.onerror=null; this.src='https://placehold.co/500x500?text=Lỗi+Hình+Ảnh';">
+                        <input type="text" class="form-control" id="image" name="image" value="<?= htmlspecialchars($product->image) ?>" placeholder="Nhập link ảnh (VD: https://...)" oninput="previewImage(event)">
+                        
+                        <div class="row mt-3">
+                            <div class="col-12" id="preview-box">
+                                <p class="small text-success mb-1">Ảnh hiện tại:</p>
+                                <img id="image-preview" src="<?= (!empty($product->image) && strpos($product->image, 'http') === 0) ? htmlspecialchars($product->image) : $basePath . '/' . (!empty($product->image) ? htmlspecialchars($product->image) : 'assets/no-image.jpg') ?>" class="img-thumbnail border-success shadow-sm" style="max-height: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/500x500?text=Lỗi+Hình+Ảnh';">
+                            </div>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                        <a href="<?= $basePath ?>/index.php?url=Product/list" class="btn btn-light border">
-                            <i class="fas fa-arrow-left me-1"></i> Quay lại
+                        <a href="<?= $basePath ?>/index.php?url=Product/list" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Hủy bỏ
                         </a>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="fas fa-save me-1"></i> Thêm sản phẩm
+                        <button type="submit" class="btn btn-warning px-4 text-dark fw-bold">
+                            <i class="fas fa-check-circle me-1"></i> Cập nhật ngay
                         </button>
                     </div>
                 </form>
@@ -167,9 +172,8 @@ function previewImage(event) {
     var url = event.target.value;
     if (url.trim() !== "") {
         output.src = url;
-        document.getElementById('image-preview-container').classList.remove('d-none');
     } else {
-        document.getElementById('image-preview-container').classList.add('d-none');
+        output.src = 'https://placehold.co/500x500?text=No+Image';
     }
 }
 </script>
