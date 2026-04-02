@@ -1,55 +1,87 @@
 <?php include 'app/views/shares/header.php'; ?>
-<?php 
+<?php
 $basePath = dirname($_SERVER['SCRIPT_NAME']);
 $basePath = ($basePath === '/' || $basePath === '\\') ? '' : $basePath;
-$baseUrl = $basePath . '/index.php?url='; 
+$baseUrl  = $basePath . '/index.php?url=';
+$cartCount = isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'quantity')) : 0;
 ?>
 
-<!-- Top Bar -->
-<div class="top-bar">
-    <div class="container d-flex justify-content-between align-items-center">
-        <span><i class="fas fa-truck me-2"></i> GIAO HÀNG TOÀN QUỐC - MIỄN PHÍ ĐỔI TRẢ TRONG 7 NGÀY</span>
-        <div>
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-                    <a href="<?= $baseUrl ?>Admin/index" class="btn btn-sm btn-danger fw-bold text-white me-3"><i class="fas fa-user-shield me-1"></i> Trang Quản Trị</a>
+<style>
+:root { --gold: #c9a227; --dark: #111; }
+.site-header { background: var(--dark); }
+.header-top { padding: 14px 0; }
+.brand-name { font-family:'Oswald',sans-serif; font-size:30px; font-weight:700; letter-spacing:1px; text-decoration:none; color:var(--gold)!important; line-height:1; }
+.brand-name span { color:#fff; }
+.header-search { position:relative; flex:1; max-width:520px; margin:0 30px; }
+.header-search input { width:100%; border:none; border-radius:4px; padding:10px 44px 10px 18px; font-size:14px; background:#fff; outline:none; }
+.header-search input::placeholder { color:#aaa; }
+.header-search button { position:absolute; right:0; top:0; bottom:0; background:none; border:none; padding:0 14px; color:#555; cursor:pointer; font-size:16px; }
+.header-search button:hover { color:var(--gold); }
+.header-icons a { color:#ccc; text-decoration:none; font-size:22px; margin-left:18px; position:relative; transition:color .2s; }
+.header-icons a:hover { color:var(--gold); }
+.header-icons .badge-count { position:absolute; top:-7px; right:-9px; background:var(--gold); color:#000; font-size:10px; font-weight:700; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; }
+.user-info { font-size:13px; color:#aaa; margin-left:18px; }
+.user-info a { color:var(--gold); font-weight:600; text-decoration:none; }
+.header-nav { background:#1a1a1a; border-top:1px solid #2a2a2a; }
+.header-nav .container { display:flex; align-items:center; }
+.header-nav a { font-family:'Oswald',sans-serif; font-size:13px; font-weight:500; letter-spacing:0.6px; text-transform:uppercase; color:#ccc; text-decoration:none; padding:13px 14px; display:block; white-space:nowrap; transition:color .2s; position:relative; }
+.header-nav a:hover, .header-nav a.active { color:var(--gold); }
+.header-nav a::after { content:''; position:absolute; bottom:0; left:14px; right:14px; height:2px; background:var(--gold); transform:scaleX(0); transition:transform .25s; }
+.header-nav a:hover::after, .header-nav a.active::after { transform:scaleX(1); }
+.header-nav a.nav-sale { color:#e55; font-weight:700; }
+.header-nav a.nav-sale:hover { color:#ff3333; }
+.header-nav .admin-btn { margin-left:auto; background:#e53935; color:#fff!important; padding:8px 16px; border-radius:3px; font-size:12px; }
+.header-nav .admin-btn:hover { background:#c62828!important; }
+.header-nav .admin-btn::after { display:none; }
+</style>
+
+<!-- ===== SITE HEADER ===== -->
+<header class="site-header">
+    <!-- Dòng 1: Logo + Search + Icons -->
+    <div class="header-top">
+        <div class="container d-flex align-items-center">
+            <a href="<?= $baseUrl ?>Product/list" class="brand-name me-4 flex-shrink-0">NEYMAR<span>SPORT</span></a>
+            <div class="header-search d-none d-md-block">
+                <input type="text" placeholder="Bạn cần tìm ...">
+                <button type="button"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="header-icons d-flex align-items-center ms-auto">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <div class="user-info d-none d-lg-block">
+                        <i class="fas fa-user me-1"></i>
+                        <?= htmlspecialchars($_SESSION['username']) ?> &nbsp;|&nbsp;
+                        <a href="javascript:logoutJWT()">Đăng xuất</a>
+                    </div>
+                <?php else: ?>
+                    <a href="<?= $baseUrl ?>User/login" title="Đăng nhập"><i class="fas fa-user"></i></a>
                 <?php endif; ?>
-                <span class="text-white me-3"><i class="fas fa-user me-1"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?> | <a href="<?= $baseUrl ?>User/logout" class="text-warning text-decoration-none fw-bold ms-1">Đăng xuất</a></span>
-            <?php else: ?>
-                <a href="<?= $baseUrl ?>User/login" class="text-white text-decoration-none me-3"><i class="fas fa-user me-1"></i> Đăng nhập / Đăng ký</a>
+                <a href="<?= $baseUrl ?>Cart/index" title="Giỏ hàng">
+                    <i class="fas fa-shopping-bag"></i>
+                    <?php if ($cartCount > 0): ?><span class="badge-count"><?= $cartCount ?></span><?php endif; ?>
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Dòng 2: Nav Menu -->
+    <nav class="header-nav">
+        <div class="container">
+            <a href="<?= $baseUrl ?>Product/list">Trang chủ</a>
+            <a href="<?= $baseUrl ?>Category/show/3" class="<?= (isset($category) && $category->id == 3) ? 'active' : '' ?>">Giày Bóng Đá</a>
+            <a href="<?= $baseUrl ?>Category/show/3" class="<?= (isset($category) && $category->id == 3) ? 'active' : '' ?>">Nike</a>
+            <a href="<?= $baseUrl ?>Category/show/4" class="<?= (isset($category) && $category->id == 4) ? 'active' : '' ?>">Adidas</a>
+            <a href="<?= $baseUrl ?>Category/show/30" class="<?= (isset($category) && $category->id == 30) ? 'active' : '' ?>">Puma</a>
+            <a href="<?= $baseUrl ?>Category/show/31" class="<?= (isset($category) && $category->id == 31) ? 'active' : '' ?>">Mizuno</a>
+            <a href="#">Phụ Kiện</a>
+            <a href="#">Hướng Dẫn</a>
+            <a href="#">Blog</a>
+            <a href="#" class="nav-sale">Xả Kho</a>
+            <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                <a href="<?= $baseUrl ?>Admin/index" class="admin-btn"><i class="fas fa-user-shield me-1"></i>Quản Trị</a>
             <?php endif; ?>
         </div>
-    </div>
-</div>
+    </nav>
+</header>
 
-<!-- Main Nav -->
-<nav class="main-nav shadow-sm mb-4">
-    <div class="container d-flex justify-content-between align-items-center">
-        <a href="<?= $baseUrl ?>Product/list" class="brand-logo fw-bold fs-3 text-dark text-decoration-none">NEYMAR<span class="bg-gold px-2 ms-1 text-dark">SPORT</span></a>
-
-        <div class="d-none d-lg-flex">
-            <a href="<?= $baseUrl ?>Product/list" class="mx-3 text-dark fw-bold text-decoration-none">TRANG CHỦ</a>
-            <a href="<?= $baseUrl ?>Product/list" class="mx-3 text-gold fw-bold text-decoration-none">GIÀY ĐÁ BANH</a>
-            <a href="#" class="mx-3 text-dark fw-bold text-decoration-none">PHỤ KIỆN</a>
-            <a href="#" class="mx-3 text-dark fw-bold text-decoration-none text-danger">SALE</a>
-        </div>
-
-        <div class="d-flex align-items-center">
-            <div class="search-box me-3 d-none d-md-block">
-                <div class="input-group">
-                    <input type="text" class="search-input form-control form-control-sm" placeholder="Tìm kiếm...">
-                </div>
-            </div>
-            <a href="<?= $baseUrl ?>Cart/index" class="text-dark text-decoration-none">
-                <div class="position-relative cursor-pointer">
-                    <i class="fas fa-shopping-bag fs-4"></i>
-                    <?php $cartCount = isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'quantity')) : 0; ?>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;"><?= $cartCount ?></span>
-                </div>
-            </a>
-        </div>
-    </div>
-</nav>
 
 <div class="container pb-5">
     <div class="row">

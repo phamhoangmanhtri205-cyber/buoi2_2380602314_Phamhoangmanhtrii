@@ -20,7 +20,7 @@ body { font-family: 'Roboto', sans-serif; background-color: #f4f5f7; background-
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header text-center">
-                    <h3 class="m-0">CHỈNH SỬA SẢN PHẨM (Bài 5 API)</h3>
+                    <h3 class="m-0">CHỈNH SỬA SẢN PHẨM</h3>
                 </div>
                 <div class="card-body">
                 <?php 
@@ -54,12 +54,23 @@ body { font-family: 'Roboto', sans-serif; background-color: #f4f5f7; background-
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="image" class="form-label fw-bold">Ảnh sản phẩm (URL)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-link"></i></span>
+                            <input type="url" class="form-control" id="image" name="image" placeholder="https://example.com/anh-san-pham.jpg">
+                        </div>
+                        <div class="mt-2 text-center" id="img-preview-wrap" style="display:none!important;">
+                            <img id="img-preview" src="" alt="Preview" style="max-height:150px;object-fit:contain;border:1px solid #eee;border-radius:8px;padding:6px;">
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                         <a href="<?= $baseUrl ?>Product/list" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-1"></i> Hủy bỏ
                         </a>
                         <button type="submit" class="btn btn-warning px-4 text-dark fw-bold">
-                            <i class="fas fa-check-circle me-1"></i> Cập nhật qua API
+                            <i class="fas fa-check-circle me-1"></i> Cập nhật
                         </button>
                     </div>
                 </form>
@@ -74,6 +85,18 @@ $(document).ready(function() {
     const basePath = '<?= $basePath ?>';
     const baseUrl = '<?= $baseUrl ?>';
     const token = localStorage.getItem('jwtToken');
+    const productId = <?= (int)$product->id ?>; // ID sản phẩm từ PHP
+
+    // Live preview ảnh khi nhập URL
+    $('#image').on('input', function() {
+        let url = $(this).val().trim();
+        if(url) {
+            $('#img-preview').attr('src', url);
+            $('#img-preview-wrap').show();
+        } else {
+            $('#img-preview-wrap').hide();
+        }
+    });
 
     $.ajax({
         url: basePath + '/index.php?url=api/category',
@@ -95,6 +118,11 @@ $(document).ready(function() {
                     $('#description').val(p.description);
                     $('#price').val(p.price);
                     $('#category_id').val(p.category_id);
+                    if(p.image) {
+                        $('#image').val(p.image);
+                        $('#img-preview').attr('src', p.image);
+                        $('#img-preview-wrap').show();
+                    }
                 },
                 error: function() {
                     alert('Lỗi nạp mã sản phẩm JSON. Có thể phiên đăng nhập hết hạn.');
@@ -107,9 +135,10 @@ $(document).ready(function() {
         e.preventDefault();
         let jsonData = {};
         $(this).serializeArray().forEach(item => jsonData[item.name] = item.value);
+        jsonData.image = $('#image').val();
 
         $.ajax({
-            url: basePath + '/index.php?url=api/product/' + jsonData.id,
+            url: basePath + '/index.php?url=api/product/' + productId,
             type: 'PUT',
             headers: { 'Authorization': 'Bearer ' + token },
             contentType: 'application/json',
@@ -123,7 +152,9 @@ $(document).ready(function() {
                     alert('Phiên làm việc hết hạn. Vui lòng đăng nhập lại!');
                     window.location.href = '<?= $baseUrl ?>User/login';
                  } else {
-                    alert('Cập nhật thất bại API.');
+                    let errMsg = 'Cập nhật thất bại (HTTP ' + xhr.status + ')';
+                    try { errMsg += '\n' + JSON.parse(xhr.responseText).message; } catch(e) { errMsg += '\n' + xhr.responseText.substring(0,300); }
+                    alert(errMsg);
                  }
             }
         });

@@ -25,6 +25,12 @@ class ProductController
      */
     public function list()
     {
+        // Chặn quyền truy cập nếu chưa đăng nhập
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: ' . dirname($_SERVER['SCRIPT_NAME']) . '/index.php?url=User/login');
+            exit;
+        }
+
         // Lấy danh sách sản phẩm
         $products = $this->productModel->getProducts();
         

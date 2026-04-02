@@ -6,104 +6,281 @@ $basePath = ($basePath === '/') ? '' : $basePath;
 $baseUrl = $basePath . '/index.php?url='; 
 ?>
 
-<!-- Top Bar -->
-<div class="top-bar">
-    <div class="container d-flex justify-content-between align-items-center">
-        <span><i class="fas fa-truck me-2"></i> GIAO HÀNG TOÀN QUỐC - MIỄN PHÍ ĐỔI TRẢ TRONG 7 NGÀY</span>
-        <div>
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-                    <a href="<?= $baseUrl ?>Admin/index" class="btn btn-sm btn-danger fw-bold text-white me-3"><i class="fas fa-user-shield me-1"></i> Trang Quản Trị</a>
+
+<style>
+:root { --gold: #c9a227; --dark: #111; }
+
+/* ===== HEADER ===== */
+.site-header { background: var(--dark); }
+
+/* Dòng trên: logo + search + icons */
+.header-top { padding: 14px 0; }
+.brand-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-decoration: none;
+    color: var(--gold) !important;
+    line-height: 1;
+}
+.brand-name span { color: #fff; }
+
+/* Search bar */
+.header-search { position: relative; flex: 1; max-width: 520px; margin: 0 30px; }
+.header-search input {
+    width: 100%;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 44px 10px 18px;
+    font-size: 14px;
+    background: #fff;
+    outline: none;
+}
+.header-search input::placeholder { color: #aaa; }
+.header-search button {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    background: none; border: none;
+    padding: 0 14px; color: #555; cursor: pointer; font-size: 16px;
+}
+.header-search button:hover { color: var(--gold); }
+
+/* Icon links */
+.header-icons a { color: #ccc; text-decoration: none; font-size: 22px; margin-left: 18px; position: relative; transition: color .2s; }
+.header-icons a:hover { color: var(--gold); }
+.header-icons .badge-count {
+    position: absolute; top: -7px; right: -9px;
+    background: var(--gold); color: #000;
+    font-size: 10px; font-weight: 700;
+    border-radius: 50%; width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+}
+.user-info { font-size: 13px; color: #aaa; margin-left: 18px; }
+.user-info a { color: var(--gold); font-weight: 600; text-decoration: none; }
+
+/* Dòng dưới: nav menu */
+.header-nav { background: #1a1a1a; border-top: 1px solid #2a2a2a; }
+.header-nav .container { display: flex; align-items: center; }
+.header-nav a {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #ccc;
+    text-decoration: none;
+    padding: 13px 14px;
+    display: block;
+    white-space: nowrap;
+    transition: color .2s, background .2s;
+    position: relative;
+}
+.header-nav a:hover, .header-nav a.active { color: var(--gold); }
+.header-nav a::after {
+    content: ''; position: absolute; bottom: 0; left: 14px; right: 14px;
+    height: 2px; background: var(--gold);
+    transform: scaleX(0); transition: transform .25s;
+}
+.header-nav a:hover::after, .header-nav a.active::after { transform: scaleX(1); }
+.header-nav a.nav-sale { color: #e55; font-weight: 700; }
+.header-nav a.nav-sale:hover { color: #ff3333; }
+.header-nav .admin-btn {
+    margin-left: auto;
+    background: #e53935; color: #fff !important;
+    padding: 8px 16px; border-radius: 3px; font-size: 12px;
+}
+.header-nav .admin-btn:hover { background: #c62828 !important; }
+.header-nav .admin-btn::after { display: none; }
+/* ===== CARD SẢN PHẨM ĐẸP HƠN ===== */
+.product-card {
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform .3s ease, box-shadow .3s ease;
+    background: #fff;
+    border: 1px solid #eee !important;
+}
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(0,0,0,.12) !important;
+}
+.product-img-wrapper { overflow: hidden; }
+.product-img-wrapper img {
+    transition: transform .4s ease;
+}
+.product-card:hover .product-img-wrapper img {
+    transform: scale(1.07);
+}
+.product-title { font-size: 13px !important; }
+.product-price { font-size: 16px !important; }
+
+/* Fade-in animation */
+@keyframes fadeInUp {
+    from { opacity:0; transform: translateY(24px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+.card-anim { animation: fadeInUp .45s ease both; }
+</style>
+
+<?php
+$basePath = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+$basePath = ($basePath === '/') ? '' : $basePath;
+$baseUrl  = $basePath . '/index.php?url=';
+$cartCount = isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'quantity')) : 0;
+?>
+
+<!-- ===== SITE HEADER ===== -->
+<header class="site-header">
+
+    <!-- Dòng 1: Logo + Search + Icons -->
+    <div class="header-top">
+        <div class="container d-flex align-items-center">
+            <!-- Logo -->
+            <a href="<?= $baseUrl ?>Product/list" class="brand-name me-4 flex-shrink-0">
+                NEYMAR<span>SPORT</span>
+            </a>
+
+            <!-- Search -->
+            <div class="header-search d-none d-md-block">
+                <input type="text" id="header-search-input" placeholder="Bạn cần tìm ..." onkeypress="if(event.key==='Enter') doSearch()">
+                <button type="button" onclick="doSearch()"><i class="fas fa-search"></i></button>
+            </div>
+
+            <!-- Icons -->
+            <div class="header-icons d-flex align-items-center ms-auto">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <div class="user-info d-none d-lg-block">
+                        <i class="fas fa-user me-1"></i>
+                        <?= htmlspecialchars($_SESSION['username']) ?> &nbsp;|&nbsp;
+                        <a href="javascript:logoutJWT()">Đăng xuất</a>
+                    </div>
+                <?php else: ?>
+                    <a href="<?= $baseUrl ?>User/login" title="Đăng nhập">
+                        <i class="fas fa-user"></i>
+                    </a>
                 <?php endif; ?>
-                <span class="text-white me-3"><i class="fas fa-user me-1"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?> | <a href="javascript:logoutJWT()" class="text-warning text-decoration-none fw-bold ms-1">Đăng xuất</a></span>
-            <?php else: ?>
-                <a href="<?= $baseUrl ?>User/login" class="text-white text-decoration-none me-3"><i class="fas fa-user me-1"></i> Đăng nhập / Đăng ký</a>
+                <a href="<?= $baseUrl ?>Cart/index" title="Giỏ hàng">
+                    <i class="fas fa-shopping-bag"></i>
+                    <?php if ($cartCount > 0): ?>
+                        <span class="badge-count"><?= $cartCount ?></span>
+                    <?php endif; ?>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dòng 2: Navigation Menu -->
+    <nav class="header-nav">
+        <div class="container">
+            <a href="<?= $baseUrl ?>Product/list" class="active">Trang chủ</a>
+            <a href="<?= $baseUrl ?>Category/show/3">Giày Bóng Đá</a>
+            <a href="<?= $baseUrl ?>Category/show/3">Nike</a>
+            <a href="<?= $baseUrl ?>Category/show/4">Adidas</a>
+            <a href="<?= $baseUrl ?>Category/show/30">Puma</a>
+            <a href="<?= $baseUrl ?>Category/show/31">Mizuno</a>
+            <a href="#">Phụ Kiện</a>
+            <a href="#">Hướng Dẫn</a>
+            <a href="#">Blog</a>
+            <a href="#" class="nav-sale">Xả Kho</a>
+            <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                <a href="<?= $baseUrl ?>Admin/index" class="admin-btn">
+                    <i class="fas fa-user-shield me-1"></i>Quản Trị
+                </a>
             <?php endif; ?>
+        </div>
+    </nav>
+
+</header>
+
+<!-- ===== HERO BANNER ===== -->
+<div class="hero-banner" style="
+    background: linear-gradient(135deg, #111 0%, #1c1c1c 50%, #2a1a00 100%);
+    padding: 52px 0;
+    border-bottom: 3px solid var(--gold);
+    position: relative;
+    overflow: hidden;
+">
+    <!-- Dường kẻ trang trí -->
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(201,162,39,.03) 40px,rgba(201,162,39,.03) 80px);pointer-events:none;"></div>
+    <div class="container position-relative">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div style="font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:14px;">
+                    ★ ĐẦY ĐỦ BỘ SƯ U 2025 ★
+                </div>
+                <h1 style="font-family:'Oswald',sans-serif;font-size:clamp(32px,5vw,58px);font-weight:700;color:#fff;line-height:1.1;margin-bottom:16px;text-transform:uppercase;">
+                    GIÀY ĐÁ BÓNG<br>
+                    <span style="color:var(--gold);">CHÍNH HÃNG 100%</span>
+                </h1>
+                <p style="color:#aaa;font-size:15px;margin-bottom:28px;max-width:480px;">
+                    Phân phối độc quyền Nike, Adidas, Puma, Mizuno — bảo hành chính hãng, đổi trả trong 7 ngày.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="#api-product-list" style="background:var(--gold);color:#111;font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;padding:13px 28px;text-decoration:none;border-radius:4px;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                        XEM SẢN PHẨM →
+                    </a>
+                    <a href="#" style="border:1.5px solid #555;color:#ccc;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;letter-spacing:1px;padding:13px 28px;text-decoration:none;border-radius:4px;transition:all .2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='#555';this.style.color='#ccc'">
+                        HƯỚNG DẬN CHỌN SIZE
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-flex justify-content-end align-items-center" style="gap:16px;">
+                <div style="text-align:center;">
+                    <div style="background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.3);border-radius:12px;padding:20px 24px;margin-bottom:12px;">
+                        <div style="font-family:'Oswald',sans-serif;font-size:36px;font-weight:700;color:var(--gold);">500+</div>
+                        <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;">Sản phẩm</div>
+                    </div>
+                    <div style="background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.3);border-radius:12px;padding:20px 24px;">
+                        <div style="font-family:'Oswald',sans-serif;font-size:36px;font-weight:700;color:var(--gold);">3</div>
+                        <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;">Cửa hàng</div>
+                    </div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="background:rgba(255,255,255,.05);border:1px solid #333;border-radius:12px;padding:20px 24px;margin-bottom:12px;">
+                        <div style="font-family:'Oswald',sans-serif;font-size:36px;font-weight:700;color:#fff;">30k+</div>
+                        <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;">Khách hàng</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,.05);border:1px solid #333;border-radius:12px;padding:20px 24px;">
+                        <div style="font-family:'Oswald',sans-serif;font-size:36px;font-weight:700;color:#fff;">100%</div>
+                        <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;">Chính hãng</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Brand strip -->
+<div style="background:#f8f8f8;border-bottom:1px solid #eee;padding:14px 0;overflow:hidden;">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-center gap-5 flex-wrap" style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;color:#bbb;">
+            <span style="color:#111;">NIKE</span>
+            <span>•</span>
+            <span>ADIDAS</span>
+            <span>•</span>
+            <span>PUMA</span>
+            <span>•</span>
+            <span>MIZUNO</span>
+            <span>•</span>
+            <span style="color:var(--gold);">NEW BALANCE</span>
         </div>
     </div>
 </div>
 
-<!-- Main Nav -->
-<nav class="main-nav shadow-sm mb-4">
-    <div class="container d-flex justify-content-between align-items-center">
-        <a href="<?= $baseUrl ?>Product/list" class="brand-logo fw-bold fs-3 text-dark text-decoration-none">NEYMAR<span class="bg-gold px-2 ms-1 text-dark">SPORT</span></a>
-
-        <div class="d-none d-lg-flex">
-            <a href="<?= $baseUrl ?>Product/list" class="mx-3 text-dark fw-bold text-decoration-none">TRANG CHỦ</a>
-            <a href="<?= $baseUrl ?>Product/list" class="mx-3 text-gold fw-bold text-decoration-none">GIÀY ĐÁ BANH</a>
-            <a href="#" class="mx-3 text-dark fw-bold text-decoration-none">PHỤ KIỆN</a>
-            <a href="#" class="mx-3 text-dark fw-bold text-decoration-none text-danger">SALE</a>
-        </div>
-
-        <div class="d-flex align-items-center">
-            <div class="search-box me-3 d-none d-md-block">
-                <div class="input-group">
-                    <input type="text" class="search-input form-control form-control-sm" placeholder="Tìm kiếm...">
-                </div>
-            </div>
-            <a href="<?= $baseUrl ?>Cart/index" class="text-dark text-decoration-none">
-                <div class="position-relative cursor-pointer">
-                    <i class="fas fa-shopping-bag fs-4"></i>
-                    <?php $cartCount = isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'quantity')) : 0; ?>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;"><?= $cartCount ?></span>
-                </div>
-            </a>
-        </div>
-    </div>
-</nav>
-
 <div class="container pb-5">
-    <div class="row">
-        <!-- Sidebar Danh mục -->
-        <div class="col-lg-3 pe-lg-4">
-            <div class="sidebar-sticky">
-                <div class="sidebar-title d-flex justify-content-between align-items-center">
-                    DANH MỤC SẢN PHẨM
-                    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-                    <a href="<?= $baseUrl ?>Category/add" class="btn btn-xs btn-dark rounded-circle" title="Thêm danh mục">
-                        <i class="fas fa-plus" style="font-size: 10px;"></i>
-                    </a>
-                    <?php endif; ?>
-                </div>
-                <ul class="category-list" id="api-category-list">
-                    <li class="text-muted small">Đang nạp danh mục API...</li>
-                </ul>
-                
-                <div class="sidebar-title mt-4">MỨC GIÁ</div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input border-dark" type="checkbox" value="" id="price1">
-                    <label class="form-check-label" for="price1">Dưới 1,000,000đ</label>
-                </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input border-dark" type="checkbox" value="" id="price2">
-                    <label class="form-check-label" for="price2">1,000,000đ - 2,000,000đ</label>
-                </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input border-dark" type="checkbox" value="" id="price3">
-                    <label class="form-check-label" for="price3">Trên 2,000,000đ</label>
-                </div>
-            </div>
-        </div>
+    <!-- Tiêu đề + nút thêm -->
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-4 pb-2 border-bottom">
+        <h4 class="fw-bold m-0 text-uppercase text-dark" id="search-title">TẤT CẢ SẢN PHẨM</h4>
+        <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+        <a href="<?= $baseUrl ?>Product/add" class="btn btn-dark btn-sm rounded-0 fw-bold px-3">
+            <i class="fas fa-plus me-1"></i> THÊM
+        </a>
+        <?php endif; ?>
+    </div>
 
-        <!-- Danh sách sản phẩm -->
-        <div class="col-lg-9">
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-                <div class="d-flex align-items-center">
-                    <h4 class="fw-bold m-0 me-3 text-uppercase text-dark">TẤT CẢ SẢN PHẨM (API)</h4>
-                    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-                    <a href="<?= $baseUrl ?>Product/add" class="btn btn-dark btn-sm rounded-0 fw-bold px-3">
-                        <i class="fas fa-plus me-1"></i> THÊM
-                    </a>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="row row-cols-2 row-cols-lg-3 g-3" id="api-product-list">
-                <div class="col-12 text-center py-5">
-                    <p class="text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Đang gọi jQuery AJAX tải dữ liệu...</p>
-                </div>
-            </div>
-            
+    <!-- Grid sản phẩm: 4 cột trên desktop -->
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3" id="api-product-list">
+        <div class="col-12 text-center py-5">
+            <p class="text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Đang tải sản phẩm...</p>
         </div>
     </div>
 </div>
@@ -203,25 +380,45 @@ $(document).ready(function() {
                     </div>`;
                 }
 
-                // Fallback since API assignment drop image
-                let imgUrl = basePath + '/assets/no-img.jpg';
+                let oriPrice = Math.round(p.price * 1.15 / 1000) * 1000;
+                let disc = Math.round((1 - p.price / oriPrice) * 100);
+                let discBadge = disc > 0 ? `<div style="position:absolute;top:10px;left:10px;background:#e53935;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:3px;z-index:10;">-${disc}%</div>` : '';
+                let newBadge  = `<div style="position:absolute;top:10px;right:10px;background:#111;color:#fff;font-size:10px;font-weight:600;padding:3px 8px;border-radius:3px;z-index:10;">MỚI</div>`;
+
+                // Dùng ảnh từ DB, nếu không có thì fallback placeholder
+                let imgUrl = (p.image && p.image.trim() !== '') ? p.image : 'https://placehold.co/300x300/f4f5f7/999?text=No+Image';
 
                 let formatPrice = new Intl.NumberFormat('vi-VN').format(p.price) + 'đ';
+                let formatOri   = new Intl.NumberFormat('vi-VN').format(oriPrice) + 'đ';
 
                 let card = `
-                <div class="col">
-                    <div class="product-card h-100 shadow-sm border-0 position-relative">
-                        <div class="badge-custom" style="position: absolute; top:10px; left:10px; background: #000; color: #fff; padding: 2px 8px; font-size:12px; font-weight: bold; z-index:10;">MỚI</div>
-                        ${discountHtml}
+                <div class="col card-anim" style="animation-delay:${i * 0.06}s">
+                    <div class="product-card h-100 position-relative" style="border-radius:10px;overflow:hidden;border:1px solid #eee;">
+                        ${discBadge}${newBadge}
                         ${btnAdmin}
-                        <div class="product-img-wrapper cursor-pointer text-center py-4" onclick="window.location.href='${baseUrl}Product/show/${p.id}'" style="background:#f4f5f7;">
-                            <img src="${imgUrl}" class="product-img" alt="${p.name}" style="height: 150px; object-fit: cover;" onerror="this.src='https://placehold.co/300x300?text=No+Image'">
+                        <div class="product-img-wrapper cursor-pointer text-center py-4"
+                             onclick="window.location.href='${baseUrl}Product/show/${p.id}'"
+                             style="background:#f7f7f7;overflow:hidden;">
+                            <img src="${imgUrl}" class="product-img" alt="${p.name}"
+                                 style="height:160px;object-fit:contain;transition:transform .4s ease;"
+                                 onerror="this.onerror=null;this.src='https://placehold.co/300x300/f4f5f7/999?text=No+Image'"
+                                 onmouseover="this.style.transform='scale(1.08)'"
+                                 onmouseout="this.style.transform='scale(1)'">
                         </div>
-                        <div class="p-3 d-flex flex-column h-100">
-                            <a href="${baseUrl}Product/show/${p.id}" class="product-title fw-bold text-dark text-decoration-none mb-1 d-block text-truncate">${p.name}</a>
-                            <p class="small text-muted mb-2">🏷️ ${p.category_name}</p>
-                            <div class="product-price fw-bold text-danger mb-3 fs-5">${formatPrice}</div>
-                            <a href="${baseUrl}Cart/add/${p.id}" class="btn bg-dark text-white w-100 rounded-0 fw-bold py-2 mt-auto" style="font-size: 13px;">THÊM GIỎ HÀNG</a>
+                        <div class="p-3 d-flex flex-column" style="gap:6px;">
+                            <a href="${baseUrl}Product/show/${p.id}" class="product-title fw-bold text-dark text-decoration-none d-block" style="font-size:13px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${p.name}</a>
+                            <p class="text-muted mb-0" style="font-size:12px;">🏷️ ${p.category_name}</p>
+                            <div class="d-flex align-items-baseline gap-2 mt-1">
+                                <span style="font-size:12px;color:#bbb;text-decoration:line-through;">${formatOri}</span>
+                                <span class="product-price fw-bold text-danger" style="font-size:16px;">${formatPrice}</span>
+                            </div>
+                            <a href="${baseUrl}Cart/add/${p.id}"
+                               class="btn w-100 fw-bold py-2 mt-2"
+                               style="background:#111;color:#fff;font-size:12px;letter-spacing:.5px;border-radius:6px;transition:background .2s;"
+                               onmouseover="this.style.background='var(--gold)';this.style.color='#111';"
+                               onmouseout="this.style.background='#111';this.style.color='#fff';">
+                                THÊM GIỎ HÀNG
+                            </a>
                         </div>
                     </div>
                 </div>`;
@@ -231,8 +428,9 @@ $(document).ready(function() {
         error: function(jqxhr, textStatus, error) {
             let err = textStatus + ", " + error;
             if(jqxhr.status === 401) {
-                $('#api-product-list').html('<div class="col-12 text-center py-5 text-warning"><p><i class="fas fa-lock me-2"></i><b>Bạn cần đăng nhập để xem sản phẩm (Bài 6 - JWT).</b></p><a href="'+baseUrl+'User/login" class="btn btn-dark mt-2">Đăng nhập ngay</a></div>');
+                window.location.href = baseUrl + 'User/login';
             } else {
+
                 $('#api-product-list').html('<div class="col-12 text-center py-5 text-danger"><p><b>Lỗi tải API Sản phẩm:</b></p><p>'+err+'</p><textarea class="form-control" rows="10">'+jqxhr.responseText+'</textarea></div>');
             }
         }
@@ -255,6 +453,68 @@ $(document).ready(function() {
             });
         }
     });
+
+});
+
+// ===== SEARCH LIVE FILTER =====
+let allProductCards = [];
+
+function getKeyword() {
+    const h = (document.getElementById('header-search-input')?.value || '').trim().toLowerCase();
+    const i = (document.getElementById('inline-search')?.value || '').trim().toLowerCase();
+    // Header search chỉ active khi bấm nút, inline-search active live
+    return h || i;
+}
+
+function filterProducts() {
+    const keyword = getKeyword();
+    const box = document.getElementById('api-product-list');
+    if (!box) return;
+
+    // Lần đầu: lưu toàn bộ cards
+    if (allProductCards.length === 0) {
+        box.querySelectorAll('.col').forEach(card => allProductCards.push(card));
+    }
+
+    let count = 0;
+    allProductCards.forEach(card => {
+        const name = (card.querySelector('a[href*="Product/show"]')?.textContent || '').toLowerCase();
+        const cat  = (card.querySelector('.text-muted')?.textContent || '').toLowerCase();
+        const match = !keyword || name.includes(keyword) || cat.includes(keyword);
+        card.style.display = match ? '' : 'none';
+        if (match) count++;
+    });
+
+    const title = document.getElementById('search-title');
+    if (title) {
+        title.textContent = keyword
+            ? `KẾT QUẢ TÌM KIẾM: "${keyword.toUpperCase()}" (${count} sản phẩm)`
+            : `TẤT CẢ SẢN PHẨM`;
+    }
+
+    let emptyMsg = document.getElementById('search-empty');
+    if (!emptyMsg) {
+        emptyMsg = document.createElement('div');
+        emptyMsg.id = 'search-empty';
+        emptyMsg.className = 'col-12 text-center py-5';
+        emptyMsg.innerHTML = '<p class="text-muted">Không tìm thấy sản phẩm phù hợp.</p>';
+        box.appendChild(emptyMsg);
+    }
+    emptyMsg.style.display = (count === 0 && keyword) ? '' : 'none';
+}
+
+function doSearch() {
+    filterProducts();
+    document.getElementById('api-product-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const inlineSearch = document.getElementById('inline-search');
+    if (inlineSearch) {
+        inlineSearch.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') doSearch();
+        });
+    }
 });
 </script>
 

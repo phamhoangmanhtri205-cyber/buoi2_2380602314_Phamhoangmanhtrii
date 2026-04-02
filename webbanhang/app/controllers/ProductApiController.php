@@ -47,17 +47,12 @@ class ProductApiController
         return false;
     }
 
-    // Lấy danh sách sản phẩm
+    // Lấy danh sách sản phẩm (public - không cần JWT)
     public function index()
     {
-        if ($this->authenticate()) {
-            header('Content-Type: application/json');
-            $products = $this->productModel->getProducts();
-            echo json_encode($products);
-        } else {
-            http_response_code(401);
-            echo json_encode(['message' => 'Unauthorized']);
-        }
+        header('Content-Type: application/json');
+        $products = $this->productModel->getProducts();
+        echo json_encode($products);
     }
 
     // Lấy thông tin sản phẩm theo ID
@@ -89,8 +84,9 @@ class ProductApiController
             $description = $data['description'] ?? '';
             $price = $data['price'] ?? '';
             $category_id = $data['category_id'] ?? null;
+            $image = $data['image'] ?? null;
             
-            $result = $this->productModel->addProduct($name, $description, $price, $category_id);
+            $result = $this->productModel->addProduct($name, $description, $price, $category_id, $image);
             
             if (is_array($result)) {
                 http_response_code(400);
@@ -110,21 +106,31 @@ class ProductApiController
     {
         if ($this->authenticate()) {
             header('Content-Type: application/json');
-            $data = json_decode(file_get_contents("php://input"), true);
-            
-            $name = $data['name'] ?? '';
-            $description = $data['description'] ?? '';
-            $price = $data['price'] ?? '';
-            $category_id = $data['category_id'] ?? null;
-            
-            // Gọi update bỏ image
-            $result = $this->productModel->updateProduct($id, $name, $description, $price, $category_id);
-            
-            if ($result) {
-                echo json_encode(['message' => 'Product updated successfully']);
-            } else {
-                http_response_code(400);
-                echo json_encode(['message' => 'Product update failed']);
+            try {
+                $data = json_decode(file_get_contents("php://input"), true);
+                if (!$data) {
+                    http_response_code(400);
+                    echo json_encode(['message' => 'Dữ liệu JSON không hợp lệ']);
+                    return;
+                }
+
+                $name        = $data['name'] ?? '';
+                $description = $data['description'] ?? '';
+                $price       = $data['price'] ?? '';
+                $category_id = $data['category_id'] ?? null;
+                $image       = $data['image'] ?? null;
+
+                $result = $this->productModel->updateProduct($id, $name, $description, $price, $category_id, $image);
+
+                if ($result) {
+                    echo json_encode(['message' => 'Product updated successfully']);
+                } else {
+                    http_response_code(400);
+                    echo json_encode(['message' => 'Product update failed - execute returned false']);
+                }
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(['message' => 'Lỗi server: ' . $e->getMessage()]);
             }
         } else {
             http_response_code(401);
